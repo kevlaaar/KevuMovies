@@ -17,8 +17,8 @@ android {
         consumerProguardFiles("consumer-rules.pro")
 
         // TODO: TMDB API configuration
-        buildConfigField("String", "TMDB_BASE_URL", "...")
-        buildConfigField("String", "TMDB_IMAGE_URL", "...")
+        buildConfigField("String", "TMDB_BASE_URL", "\"https://api.themoviedb.org/3/\"")
+        buildConfigField("String", "TMDB_IMAGE_URL", "\"https://image.tmdb.org/t/p/\"")
     }
 
     buildFeatures {
