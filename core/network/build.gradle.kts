@@ -1,10 +1,11 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-
 }
 
 android {
@@ -19,6 +20,14 @@ android {
         // TODO: TMDB API configuration
         buildConfigField("String", "TMDB_BASE_URL", "\"https://api.themoviedb.org/3/\"")
         buildConfigField("String", "TMDB_IMAGE_URL", "\"https://image.tmdb.org/t/p/\"")
+
+        val properties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if(localPropertiesFile.exists()){
+            properties.load(localPropertiesFile.inputStream())
+        }
+        val tmdbApiToken = properties.getProperty("TMDB_API_TOKEN") ?: ""
+        buildConfigField("String", "TMDB_API_TOKEN", "\"$tmdbApiToken\"")
     }
 
     buildFeatures {
