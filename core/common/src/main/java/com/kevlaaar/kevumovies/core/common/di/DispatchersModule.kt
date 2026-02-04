@@ -30,14 +30,14 @@ object DispatchersModule {
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
-        @Provides
+    @Provides
     @Singleton
-    @IoDispatcher
+    @DefaultDispatcher
     fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 
-        @Provides
+    @Provides
     @Singleton
-    @IoDispatcher
+    @MainDispatcher
     fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
 
 
