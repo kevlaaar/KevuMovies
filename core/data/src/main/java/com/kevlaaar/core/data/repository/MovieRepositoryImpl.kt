@@ -45,13 +45,14 @@ class MovieRepositoryImpl @Inject constructor(
 
     override suspend fun refreshMoviesByCategory(
         category: MovieListCategory,
-        page: Int
+        page: Int,
+        forceRefresh: Boolean
     ): Result<Unit> = withContext(ioDispatcher){
         runCatching {
             val dbCategory = category.toDatabaseCategory()
 
-            // Check is cache is still valid
-            if(page == 1 && isCacheValid(dbCategory)){
+            // Check is cache is still valid (and skip check if forceRefresh)
+            if(!forceRefresh && page == 1 && isCacheValid(dbCategory)){
                 return@runCatching
             }
 

@@ -10,7 +10,11 @@ import kotlinx.coroutines.flow.Flow
 interface MovieRepository {
     fun getMoviesByCategory(category: MovieListCategory): Flow<List<Movie>>
 
-    suspend fun refreshMoviesByCategory(category: MovieListCategory, page: Int = 1): Result<Unit>
+    suspend fun refreshMoviesByCategory(
+        category: MovieListCategory,
+        page: Int = 1,
+        forceRefresh: Boolean = false
+    ): Result<Unit>
 
     suspend fun getMovieDetail(movieId: Int): Result<MovieDetail>
 

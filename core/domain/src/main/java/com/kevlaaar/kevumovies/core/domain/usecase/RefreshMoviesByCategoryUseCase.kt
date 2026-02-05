@@ -7,7 +7,11 @@ import javax.inject.Inject
 class RefreshMoviesByCategoryUseCase @Inject constructor(
     private val movieRepository: MovieRepository
 ) {
-    suspend operator fun invoke(category: MovieListCategory, page: Int = 1): Result<Unit> {
-        return movieRepository.refreshMoviesByCategory(category, page)
+    suspend operator fun invoke(
+        category: MovieListCategory,
+        page: Int = 1,
+        forceRefresh: Boolean = false
+    ): Result<Unit> {
+        return movieRepository.refreshMoviesByCategory(category, page, forceRefresh)
     }
 }
