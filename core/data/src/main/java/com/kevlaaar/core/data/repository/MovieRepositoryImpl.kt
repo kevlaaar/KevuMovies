@@ -16,6 +16,7 @@ import com.kevlaaar.kevumovies.core.domain.repository.MovieRepository
 import com.kevlaaar.kevumovies.core.network.api.TmdbApiService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -37,6 +38,7 @@ class MovieRepositoryImpl @Inject constructor(
 
     override fun getMoviesByCategory(category: MovieListCategory): Flow<List<Movie>> {
         return movieDao.observeMoviesByCategory(category.toDatabaseCategory())
+            .distinctUntilChanged()
             .map { entities ->
                 entities.map { it.toDomain() }
             }
@@ -136,6 +138,7 @@ class MovieRepositoryImpl @Inject constructor(
 
     override fun getFavoriteMovies(): Flow<List<Movie>> {
         return movieDao.observeFavoriteMovies()
+            .distinctUntilChanged()
             .map { entities -> entities.map { it.toDomain() } }
             .flowOn(ioDispatcher)
     }
@@ -148,6 +151,7 @@ class MovieRepositoryImpl @Inject constructor(
 
     override fun isFavorite(movieId: Int): Flow<Boolean> {
         return movieDao.observeFavoriteStatus(movieId)
+            .distinctUntilChanged()
             .map { it ?: false }
             .flowOn(ioDispatcher)
     }

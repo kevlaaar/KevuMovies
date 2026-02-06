@@ -18,7 +18,7 @@ class HomeViewModel @Inject constructor(
     private val getMoviesByCategoryUseCase: GetMoviesByCategoryUseCase,
     private val refreshMoviesByCategoryUseCase: RefreshMoviesByCategoryUseCase,
     private val networkMonitor: NetworkMonitor
-): MviViewModel<HomeUiState, HomeIntent, HomeEffect>(HomeUiState()) {
+) : MviViewModel<HomeUiState, HomeIntent, HomeEffect>(HomeUiState()) {
 
     init {
         observerNetworkStatus()
@@ -50,26 +50,37 @@ class HomeViewModel @Inject constructor(
                     copy(trendingMovies = trendingMovies.copy(movies = movies, isLoading = false))
                 }
             }
-
+        }
+        viewModelScope.launch {
             getMoviesByCategoryUseCase(MovieListCategory.NOW_PLAYING).collectLatest { movies ->
                 updateState {
-                    copy(nowPlayingMovies = nowPlayingMovies.copy(movies = movies, isLoading = false))
+                    copy(
+                        nowPlayingMovies = nowPlayingMovies.copy(
+                            movies = movies,
+                            isLoading = false
+                        )
+                    )
                 }
             }
-
+        }
+        viewModelScope.launch {
             getMoviesByCategoryUseCase(MovieListCategory.POPULAR).collectLatest { movies ->
                 updateState {
                     copy(popularMovies = popularMovies.copy(movies = movies, isLoading = false))
                 }
             }
-
+        }
+        viewModelScope.launch {
             getMoviesByCategoryUseCase(MovieListCategory.TOP_RATED).collectLatest { movies ->
                 updateState {
                     copy(topRatedMovies = topRatedMovies.copy(movies = movies, isLoading = false))
                 }
             }
 
+        }
+        viewModelScope.launch {
             getMoviesByCategoryUseCase(MovieListCategory.UPCOMING).collectLatest { movies ->
+
                 updateState {
                     copy(upcomingMovies = upcomingMovies.copy(movies = movies, isLoading = false))
                 }
@@ -82,7 +93,7 @@ class HomeViewModel @Inject constructor(
 
         categories.map { category ->
             viewModelScope.async {
-                refreshCategory(category, forceRefresh = false)
+                loadCategory(category)
             }
         }.awaitAll()
     }
@@ -94,23 +105,39 @@ class HomeViewModel @Inject constructor(
 
         categories.map { category ->
             viewModelScope.async {
-                refreshCategory(category, forceRefresh = true)
+                val result = refreshMoviesByCategoryUseCase(
+                    category = category,
+                    forceRefresh = true
+                )
+                result.onFailure {
+                    sendEffect(HomeEffect.ShowError("Failed to refresh ${category.displayName}"))
+                }
             }
         }.awaitAll()
 
         updateState { copy(isRefreshing = false) }
     }
 
-    private suspend fun refreshCategory(category: MovieListCategory, forceRefresh: Boolean = false){
-        updateCategoryLoading(category, true)
+    private suspend fun loadCategory(category: MovieListCategory) {
+        val hasExistingData = when(category) {
+            MovieListCategory.TRENDING -> currentState.trendingMovies.movies.isNotEmpty()
+            MovieListCategory.NOW_PLAYING -> currentState.nowPlayingMovies.movies.isNotEmpty()
+            MovieListCategory.POPULAR -> currentState.popularMovies.movies.isNotEmpty()
+            MovieListCategory.TOP_RATED -> currentState.topRatedMovies.movies.isNotEmpty()
+            MovieListCategory.UPCOMING -> currentState.upcomingMovies.movies.isNotEmpty()
+        }
 
-        val result = refreshMoviesByCategoryUseCase(category, forceRefresh = forceRefresh)
+        if(!hasExistingData) {
+            updateCategoryLoading(category, true)
+        }
+
+        val result = refreshMoviesByCategoryUseCase(
+            category = category,
+            forceRefresh = false
+        )
 
         result.onFailure { error ->
             updateCategoryError(category, error.message ?: "Unknown error occurred")
-            if(forceRefresh) {
-                sendEffect(HomeEffect.ShowError("Failed to refresh ${category.displayName}"))
-            }
         }
 
         updateCategoryLoading(category, false)
@@ -122,15 +149,19 @@ class HomeViewModel @Inject constructor(
                 MovieListCategory.TRENDING -> copy(
                     trendingMovies = trendingMovies.copy(isLoading = isLoading)
                 )
+
                 MovieListCategory.NOW_PLAYING -> copy(
                     nowPlayingMovies = nowPlayingMovies.copy(isLoading = isLoading)
                 )
+
                 MovieListCategory.POPULAR -> copy(
                     popularMovies = popularMovies.copy(isLoading = isLoading)
                 )
+
                 MovieListCategory.TOP_RATED -> copy(
                     topRatedMovies = topRatedMovies.copy(isLoading = isLoading)
                 )
+
                 MovieListCategory.UPCOMING -> copy(
                     upcomingMovies = upcomingMovies.copy(isLoading = isLoading)
                 )
@@ -144,15 +175,19 @@ class HomeViewModel @Inject constructor(
                 MovieListCategory.TRENDING -> copy(
                     trendingMovies = trendingMovies.copy(error = error)
                 )
+
                 MovieListCategory.NOW_PLAYING -> copy(
                     nowPlayingMovies = nowPlayingMovies.copy(error = error)
                 )
+
                 MovieListCategory.POPULAR -> copy(
                     popularMovies = popularMovies.copy(error = error)
                 )
+
                 MovieListCategory.TOP_RATED -> copy(
                     topRatedMovies = topRatedMovies.copy(error = error)
                 )
+
                 MovieListCategory.UPCOMING -> copy(
                     upcomingMovies = upcomingMovies.copy(error = error)
                 )

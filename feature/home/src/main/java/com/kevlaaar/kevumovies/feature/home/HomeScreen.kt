@@ -102,60 +102,71 @@ private fun HomeScreen(
                         onRefresh = { onIntent(HomeIntent.Refresh) },
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(vertical = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
-                            item {
-                                OfflineBanner(isOffline = uiState.isOffline)
-                            }
-
-                            item {
-                                MovieSection(
-                                    title = MovieListCategory.TRENDING.displayName,
-                                    state = uiState.trendingMovies,
-                                    category = MovieListCategory.TRENDING,
-                                    onIntent = onIntent
-                                )
-                            }
-
-                            item {
-                                MovieSection(
-                                    title = MovieListCategory.NOW_PLAYING.displayName,
-                                    state = uiState.nowPlayingMovies,
-                                    category = MovieListCategory.NOW_PLAYING,
-                                    onIntent = onIntent
-                                )
-                            }
-                            item {
-                                MovieSection(
-                                    title = MovieListCategory.POPULAR.displayName,
-                                    state = uiState.popularMovies,
-                                    category = MovieListCategory.POPULAR,
-                                    onIntent = onIntent
-                                )
-                            }
-                            item {
-                                MovieSection(
-                                    title = MovieListCategory.TOP_RATED.displayName,
-                                    state = uiState.topRatedMovies,
-                                    category = MovieListCategory.TOP_RATED,
-                                    onIntent = onIntent
-                                )
-                            }
-                            item {
-                                MovieSection(
-                                    title = MovieListCategory.UPCOMING.displayName,
-                                    state = uiState.upcomingMovies,
-                                    category = MovieListCategory.UPCOMING,
-                                    onIntent = onIntent
-                                )
-                            }
-                        }
+                        HomeContent(
+                            uiState = uiState,
+                            onIntent = onIntent
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun HomeContent(
+    uiState: HomeUiState,
+    onIntent: (HomeIntent) -> Unit
+){
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item(key = "offline_banner") {
+            OfflineBanner(isOffline = uiState.isOffline)
+        }
+
+        item(key = "trending") {
+            MovieSection(
+                title = MovieListCategory.TRENDING.displayName,
+                state = uiState.trendingMovies,
+                category = MovieListCategory.TRENDING,
+                onIntent = onIntent
+            )
+        }
+
+        item(key = "now_playing") {
+            MovieSection(
+                title = MovieListCategory.NOW_PLAYING.displayName,
+                state = uiState.nowPlayingMovies,
+                category = MovieListCategory.NOW_PLAYING,
+                onIntent = onIntent
+            )
+        }
+        item(key = "popular") {
+            MovieSection(
+                title = MovieListCategory.POPULAR.displayName,
+                state = uiState.popularMovies,
+                category = MovieListCategory.POPULAR,
+                onIntent = onIntent
+            )
+        }
+        item(key = "top_rated") {
+            MovieSection(
+                title = MovieListCategory.TOP_RATED.displayName,
+                state = uiState.topRatedMovies,
+                category = MovieListCategory.TOP_RATED,
+                onIntent = onIntent
+            )
+        }
+        item(key = "upcoming") {
+            MovieSection(
+                title = MovieListCategory.UPCOMING.displayName,
+                state = uiState.upcomingMovies,
+                category = MovieListCategory.UPCOMING,
+                onIntent = onIntent
+            )
         }
     }
 }
@@ -172,7 +183,7 @@ private fun MovieSection(
         movies = state.movies.toMovieItems(),
         onMovieClick = { movieId -> onIntent(HomeIntent.OnMovieClick(movieId)) },
         onSeeAllClick = { onIntent(HomeIntent.OnCategoryClick(category)) },
-        isLoading = state.isLoading
+        showShimmer = state.showShimmer
     )
 }
 
@@ -184,11 +195,3 @@ private fun List<Movie>.toMovieItems(): List<MovieItem> = map { movie ->
         rating = movie.voteAverage
     )
 }
-
-
-
-
-
-
-
-

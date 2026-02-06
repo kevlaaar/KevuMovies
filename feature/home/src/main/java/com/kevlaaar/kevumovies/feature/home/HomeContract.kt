@@ -22,7 +22,7 @@ data class HomeUiState(
                 popularMovies.isLoading &&
                 topRatedMovies.isLoading &&
                 upcomingMovies.isLoading &&
-                trendingMovies.movies.isEmpty()
+                !hasAnyContent
 
     val hasAnyContent: Boolean
         get() = trendingMovies.movies.isNotEmpty() ||
@@ -36,7 +36,10 @@ data class MovieListState(
     val movies: List<Movie> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
-)
+) {
+    val showShimmer: Boolean
+        get() = isLoading && movies.isEmpty()
+}
 
 sealed interface HomeIntent: UiIntent {
     data object LoadMovies: HomeIntent

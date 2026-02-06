@@ -33,7 +33,7 @@ interface MovieDao {
         SELECT m.* FROM movies m
         INNER JOIN movie_categories mc on m.id = mc.movie_id
         WHERE mc.category = :category
-        ORDER BY mc.order_index ASC
+        ORDER BY mc.page ASC, mc.order_index ASC
     """
     )
     fun observeMoviesByCategory(category: String): Flow<List<MovieEntity>>
@@ -43,7 +43,7 @@ interface MovieDao {
         SELECT m.* FROM movies m
         INNER JOIN movie_categories mc ON m.id = mc.movie_id
         WHERE mc.category = :category
-        ORDER BY mc.order_index ASC
+        ORDER BY mc.page ASC, mc.order_index ASC
     """)
     suspend fun getMoviesByCategory(category: String): List<MovieEntity>
 
@@ -67,6 +67,10 @@ interface MovieDao {
     @Query("DELETE FROM movie_categories WHERE category = :category")
     suspend fun clearMovieCategory(category: String)
 
+    @Query("DELETE FROM movie_categories WHERE category = :category AND movie_id NOT IN (:keepMovieIds)")
+    suspend fun clearMovieCategoryExcept(category: String, keepMovieIds: List<Int>)
+
+
     @Query("DELETE FROM movies WHERE id NOT IN (SELECT movie_id FROM movie_categories) AND is_favorite = 0")
     suspend fun clearOrphanedMovies()
 
@@ -79,9 +83,12 @@ interface MovieDao {
         movies: List<MovieEntity>,
         categoryEntities: List<MovieCategoryEntity>
     ) {
-        clearMovieCategory(category)
+        if(movies.isEmpty()) return
+        val newMovieIds = movies.map { it.id }
         insertMovies(movies)
+        clearMovieCategoryExcept(category, newMovieIds)
         insertMovieCategories(categoryEntities)
         clearOrphanedMovies()
+
     }
 }
