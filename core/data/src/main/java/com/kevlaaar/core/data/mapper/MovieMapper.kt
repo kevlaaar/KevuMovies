@@ -54,7 +54,7 @@ fun MovieEntity.toDomain(): Movie {
         popularity = popularity,
         originalLanguage = originalLanguage,
         originalTitle = originalTitle,
-        isFavorite = isFavorite
+        isFavorite = false
     )
 }
 

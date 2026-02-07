@@ -23,7 +23,7 @@ interface MovieDao {
 
     // Query operations
     @Query("SELECT * FROM movies WHERE id = :movieId")
-    suspend fun getMoviesById(movieId: Int): MovieEntity?
+    suspend fun getMovieById(movieId: Int): MovieEntity?
 
     @Query("SELECT * FROM movies WHERE id = :movieId")
     fun observeMovieById(movieId: Int): Flow<MovieEntity?>
@@ -47,18 +47,6 @@ interface MovieDao {
     """)
     suspend fun getMoviesByCategory(category: String): List<MovieEntity>
 
-    @Query("SELECT * FROM movies WHERE is_favorite = 1 ORDER BY cached_at DESC")
-    fun observeFavoriteMovies(): Flow<List<MovieEntity>>
-
-    @Query("SELECT * FROM movies WHERE is_favorite = 1 ORDER BY cached_at DESC")
-    suspend fun getFavoriteMovies(): List<MovieEntity>
-
-    @Query("UPDATE movies SET is_favorite = :isFavorite WHERE id = :movieId")
-    suspend fun updateFavoriteStatus(movieId: Int, isFavorite: Boolean)
-
-    @Query("SELECT is_favorite FROM movies WHERE id = :movieId")
-    fun observeFavoriteStatus(movieId: Int): Flow<Boolean?>
-
     // Search in cached movies
     @Query("SELECT * FROM movies WHERE title LIKE '%' || :query || '%' ORDER BY popularity DESC")
     fun searchMovies(query: String): Flow<List<MovieEntity>>
@@ -71,7 +59,7 @@ interface MovieDao {
     suspend fun clearMovieCategoryExcept(category: String, keepMovieIds: List<Int>)
 
 
-    @Query("DELETE FROM movies WHERE id NOT IN (SELECT movie_id FROM movie_categories) AND is_favorite = 0")
+    @Query("DELETE FROM movies WHERE id NOT IN (SELECT movie_id FROM movie_categories)")
     suspend fun clearOrphanedMovies()
 
     @Query("SELECT cached_at FROM movie_categories WHERE category = :category LIMIT 1")
@@ -89,6 +77,5 @@ interface MovieDao {
         clearMovieCategoryExcept(category, newMovieIds)
         insertMovieCategories(categoryEntities)
         clearOrphanedMovies()
-
     }
 }

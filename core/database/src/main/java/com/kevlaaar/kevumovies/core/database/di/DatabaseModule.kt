@@ -3,6 +3,7 @@ package com.kevlaaar.kevumovies.core.database.di
 import android.content.Context
 import androidx.room.Room
 import com.kevlaaar.kevumovies.core.database.KevuMoviesDatabase
+import com.kevlaaar.kevumovies.core.database.dao.FavoriteMovieDao
 import com.kevlaaar.kevumovies.core.database.dao.MovieDao
 import com.kevlaaar.kevumovies.core.database.dao.RemoteKeyDao
 import dagger.Module
@@ -40,6 +41,12 @@ class DatabaseModule {
     @Singleton
     fun provideRemoteKeyDao(database: KevuMoviesDatabase): RemoteKeyDao {
         return database.remoteKeyDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideFavoriteMovieDao(database: KevuMoviesDatabase): FavoriteMovieDao {
+        return database.favoriteMovieDao()
     }
 
 }

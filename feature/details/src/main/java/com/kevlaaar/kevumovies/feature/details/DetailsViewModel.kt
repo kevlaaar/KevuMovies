@@ -8,7 +8,7 @@ import com.kevlaaar.kevumovies.core.domain.usecase.GetMovieDetailUseCase
 import com.kevlaaar.kevumovies.core.domain.usecase.GetMovieVideosUseCase
 import com.kevlaaar.kevumovies.core.domain.usecase.GetSimilarMoviesUseCase
 import com.kevlaaar.kevumovies.core.domain.usecase.IsFavoriteUseCase
-import com.kevlaaar.kevumovies.core.domain.usecase.ToggleFavoritesUseCase
+import com.kevlaaar.kevumovies.core.domain.usecase.ToggleFavoriteUseCase
 import com.kevlaaar.kevumovies.core.ui.mvi.MviViewModel
 import com.kevlaaar.kevumovies.feature.details.navigation.MovieDetails
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,14 +24,14 @@ class DetailsViewModel @Inject constructor(
     private val getMovieCreditsUseCase: GetMovieCreditsUseCase,
     private val getMovieVideosUseCase: GetMovieVideosUseCase,
     private val getSimilarMoviesUseCase: GetSimilarMoviesUseCase,
-    private val toggleFavoritesUseCase: ToggleFavoritesUseCase,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val isFavoriteUseCase: IsFavoriteUseCase
 ): MviViewModel<DetailsUiState, DetailsIntent, DetailsEffect>(DetailsUiState()) {
 
     private val movieId: Int = savedStateHandle.toRoute<MovieDetails>().movieId
 
     init {
-        observerFavoriteStatus()
+        observeFavoriteStatus()
         onIntent(DetailsIntent.LoadMovieDetails(movieId))
     }
 
@@ -52,9 +52,9 @@ class DetailsViewModel @Inject constructor(
         }
     }
 
-    private fun observerFavoriteStatus() {
+    private fun observeFavoriteStatus() {
         viewModelScope.launch {
-            isFavoriteUseCase(movieId).collectLatest { isFavoriteUseCase ->
+            isFavoriteUseCase(movieId).collectLatest { isFavorite ->
                 updateState { copy(isFavorite = isFavorite) }
             }
         }
@@ -99,27 +99,8 @@ class DetailsViewModel @Inject constructor(
     }
 
     private suspend fun toggleFavorite() {
-        currentState.movieDetail?.let {
-            toggleFavoritesUseCase(movieId)
+        currentState.movieDetail?.let { movieDetail ->
+            toggleFavoriteUseCase(movieDetail)
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

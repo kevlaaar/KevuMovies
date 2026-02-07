@@ -4,9 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity("movies")
-data class MovieEntity(
-
+@Entity(tableName = "favorite_movies")
+data class FavoriteMovieEntity(
     @PrimaryKey
     @ColumnInfo(name = "id")
     val id: Int,
@@ -41,6 +40,16 @@ data class MovieEntity(
     @ColumnInfo(name = "original_title")
     val originalTitle: String,
 
-    @ColumnInfo(name = "cached_at")
-    val cachedAt: Long = System.currentTimeMillis()
+    @ColumnInfo(name = "runtime")
+    val runtime: Int? = null,
+
+    @ColumnInfo(name = "genres")
+    val genres: String? = null, // Stored as comma-separated string
+
+    @ColumnInfo(name = "favorited_at")
+    val favoritedAt: Long = System.currentTimeMillis(),
+
+    // To be used for watchlist feature implementation in future
+    @ColumnInfo(name = "watchlist_id")
+    val watchlistId: Long? = null
 )

@@ -30,7 +30,11 @@ interface MovieRepository {
 
     fun getFavoriteMovies(): Flow<List<Movie>>
 
-    suspend fun toggleFavorite(movieId: Int)
+    suspend fun addToFavorites(movieDetail: MovieDetail)
+
+    suspend fun removeFromFavorites(movieId: Int)
 
     fun isFavorite(movieId: Int): Flow<Boolean>
+
+    suspend fun toggleFavorite(movieDetail: MovieDetail)
 }

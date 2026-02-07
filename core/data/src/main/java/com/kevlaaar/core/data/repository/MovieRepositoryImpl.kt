@@ -3,8 +3,10 @@ package com.kevlaaar.core.data.repository
 import com.kevlaaar.core.data.mapper.toDomain
 import com.kevlaaar.core.data.mapper.toDomainList
 import com.kevlaaar.core.data.mapper.toEntitiesWithCategory
+import com.kevlaaar.core.data.mapper.toFavoriteEntity
 import com.kevlaaar.kevumovies.core.common.di.IoDispatcher
 import com.kevlaaar.kevumovies.core.common.network.NetworkMonitor
+import com.kevlaaar.kevumovies.core.database.dao.FavoriteMovieDao
 import com.kevlaaar.kevumovies.core.database.dao.MovieDao
 import com.kevlaaar.kevumovies.core.database.entity.MovieCategory
 import com.kevlaaar.kevumovies.core.domain.model.Credits
@@ -28,6 +30,7 @@ import javax.inject.Singleton
 class MovieRepositoryImpl @Inject constructor(
     private val apiService: TmdbApiService,
     private val movieDao: MovieDao,
+    private val favoriteMovieDao: FavoriteMovieDao,
     private val networkMonitor: NetworkMonitor,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ): MovieRepository {
@@ -83,8 +86,8 @@ class MovieRepositoryImpl @Inject constructor(
     override suspend fun getMovieDetail(movieId: Int): Result<MovieDetail> =
         withContext(ioDispatcher){
             runCatching {
-                val isFavorite = movieDao.observeFavoriteStatus(movieId).first() ?: false
                 val response = apiService.getMovieDetails(movieId)
+                val isFavorite = favoriteMovieDao.isFavorite(movieId)
                 response.toDomain(isFavorite)
             }
         }
@@ -137,25 +140,38 @@ class MovieRepositoryImpl @Inject constructor(
         }
 
     override fun getFavoriteMovies(): Flow<List<Movie>> {
-        return movieDao.observeFavoriteMovies()
+        return favoriteMovieDao.observeAllFavorites()
             .distinctUntilChanged()
-            .map { entities -> entities.map { it.toDomain() } }
+            .map { entities -> entities.toDomainList() }
             .flowOn(ioDispatcher)
     }
 
-    override suspend fun toggleFavorite(movieId: Int) =
-        withContext(ioDispatcher){
-            val currentStatus = movieDao.observeFavoriteStatus(movieId).first() ?: false
-            movieDao.updateFavoriteStatus(movieId, !currentStatus)
+    override suspend fun addToFavorites(movieDetail: MovieDetail) =
+        withContext(ioDispatcher) {
+            val entity = movieDetail.toFavoriteEntity()
+            favoriteMovieDao.addFavorite(entity)
+        }
+
+    override suspend fun removeFromFavorites(movieId: Int) =
+        withContext(ioDispatcher) {
+            favoriteMovieDao.removeFavorite(movieId)
         }
 
     override fun isFavorite(movieId: Int): Flow<Boolean> {
-        return movieDao.observeFavoriteStatus(movieId)
-            .map { it ?: false }
-            .distinctUntilChanged()
-            .flowOn(ioDispatcher)
+            return favoriteMovieDao.observeIsFavorite(movieId)
+                .distinctUntilChanged()
+                .flowOn(ioDispatcher)
     }
 
+    override suspend fun toggleFavorite(movieDetail: MovieDetail) =
+        withContext(ioDispatcher){
+            val isFavorite = favoriteMovieDao.isFavorite(movieDetail.id)
+            if(isFavorite){
+                favoriteMovieDao.removeFavorite(movieDetail.id)
+            } else {
+                favoriteMovieDao.addFavorite(movieDetail.toFavoriteEntity())
+            }
+        }
 
     private suspend fun isCacheValid(category: String): Boolean {
         val lastUpdated = movieDao.getCategoryLastUpdated(category) ?: return false
