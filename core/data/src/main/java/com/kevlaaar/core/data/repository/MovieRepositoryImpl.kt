@@ -151,8 +151,8 @@ class MovieRepositoryImpl @Inject constructor(
 
     override fun isFavorite(movieId: Int): Flow<Boolean> {
         return movieDao.observeFavoriteStatus(movieId)
-            .distinctUntilChanged()
             .map { it ?: false }
+            .distinctUntilChanged()
             .flowOn(ioDispatcher)
     }
 
