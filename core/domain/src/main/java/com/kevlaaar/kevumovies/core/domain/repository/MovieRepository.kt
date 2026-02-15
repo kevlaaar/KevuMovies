@@ -28,6 +28,8 @@ interface MovieRepository {
 
     suspend fun searchMovies(query: String, page: Int = 1): Result<List<Movie>>
 
+    suspend fun searchOfflineMovies(query: String): Result<List<Movie>>
+
     fun getFavoriteMovies(): Flow<List<Movie>>
 
     suspend fun addToFavorites(movieDetail: MovieDetail)
@@ -37,4 +39,12 @@ interface MovieRepository {
     fun isFavorite(movieId: Int): Flow<Boolean>
 
     suspend fun toggleFavorite(movieDetail: MovieDetail)
+
+    fun getRecentSearches(): Flow<List<String>>
+
+    suspend fun addRecentSearch(query: String)
+
+    suspend fun removeRecentSearch(query: String)
+
+    suspend fun clearRecentSearches()
 }

@@ -36,6 +36,14 @@ interface FavoriteMovieDao {
     @Query("SELECT COUNT(*) FROM favorite_movies")
     fun observeFavoriteCount(): Flow<Int>
 
+    @Query("""
+            SELECT * FROM favorite_movies
+            WHERE title LIKE '%' || :query || '%'
+            ORDER BY popularity DESC
+        """
+    )
+    suspend fun searchFavorites(query: String): List<FavoriteMovieEntity>
+
     // Future: Watchlist support
     @Query("SELECT * FROM favorite_movies WHERE watchlist_id = :watchlistId ORDER BY favorited_at DESC")
     fun observeFavoritesByWatchlist(watchlistId: Long): Flow<List<FavoriteMovieEntity>>

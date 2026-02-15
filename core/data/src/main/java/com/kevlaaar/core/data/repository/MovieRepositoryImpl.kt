@@ -5,9 +5,9 @@ import com.kevlaaar.core.data.mapper.toDomainList
 import com.kevlaaar.core.data.mapper.toEntitiesWithCategory
 import com.kevlaaar.core.data.mapper.toFavoriteEntity
 import com.kevlaaar.kevumovies.core.common.di.IoDispatcher
-import com.kevlaaar.kevumovies.core.common.network.NetworkMonitor
 import com.kevlaaar.kevumovies.core.database.dao.FavoriteMovieDao
 import com.kevlaaar.kevumovies.core.database.dao.MovieDao
+import com.kevlaaar.kevumovies.core.database.datastore.RecentSearchesDataStore
 import com.kevlaaar.kevumovies.core.database.entity.MovieCategory
 import com.kevlaaar.kevumovies.core.domain.model.Credits
 import com.kevlaaar.kevumovies.core.domain.model.Movie
@@ -31,7 +31,7 @@ class MovieRepositoryImpl @Inject constructor(
     private val apiService: TmdbApiService,
     private val movieDao: MovieDao,
     private val favoriteMovieDao: FavoriteMovieDao,
-    private val networkMonitor: NetworkMonitor,
+    private val recentSearchesDataStore: RecentSearchesDataStore,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ): MovieRepository {
 
@@ -127,15 +127,25 @@ class MovieRepositoryImpl @Inject constructor(
     override suspend fun searchMovies(query: String, page: Int): Result<List<Movie>> =
         withContext(ioDispatcher) {
             runCatching {
-                val isOnline = networkMonitor.isOnline.first()
+                val response = apiService.searchMovies(query, page)
+                response.results.toDomainList()
+            }
+        }
 
-                if(isOnline){
-                    val response = apiService.searchMovies(query, page)
-                    response.results.toDomainList()
-                } else {
-                    // Offline search in cached movies
-                    movieDao.searchMovies(query).first().map { it.toDomain() }
-                }
+    override suspend fun searchOfflineMovies(query: String): Result<List<Movie>> =
+        withContext(ioDispatcher) {
+            runCatching {
+                // Search in cached movies
+                val cachedResults = movieDao.searchMovies(query).first().map { it.toDomain() }
+
+                // Search in favorites
+                val favoriteResults = favoriteMovieDao.searchFavorites(query).map { it.toDomain() }
+
+                val combined = (favoriteResults + cachedResults)
+                    .distinctBy { it.id }
+                    .sortedByDescending { it.popularity }
+
+                combined
             }
         }
 
@@ -172,6 +182,22 @@ class MovieRepositoryImpl @Inject constructor(
                 favoriteMovieDao.addFavorite(movieDetail.toFavoriteEntity())
             }
         }
+
+    override fun getRecentSearches(): Flow<List<String>> {
+        return recentSearchesDataStore.recentSearches
+    }
+
+    override suspend fun addRecentSearch(query: String) {
+        recentSearchesDataStore.addRecentSearch(query)
+    }
+
+    override suspend fun removeRecentSearch(query: String) {
+        recentSearchesDataStore.removeRecentSearch(query)
+    }
+
+    override suspend fun clearRecentSearches() {
+        recentSearchesDataStore.clearRecentSearches()
+    }
 
     private suspend fun isCacheValid(category: String): Boolean {
         val lastUpdated = movieDao.getCategoryLastUpdated(category) ?: return false

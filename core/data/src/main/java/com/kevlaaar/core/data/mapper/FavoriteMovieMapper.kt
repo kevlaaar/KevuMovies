@@ -28,8 +28,8 @@ fun MovieDetail.toFavoriteEntity(): FavoriteMovieEntity {
         id = id,
         title = title,
         overview = overview,
-        posterPath = posterUrl?.substringAfterLast("/"),
-        backdropPath = backdropUrl?.substringAfterLast("/"),
+        posterPath = extractPathFromUrl(posterUrl),
+        backdropPath = extractPathFromUrl(backdropUrl),
         releaseDate = releaseDate,
         voteAverage = voteAverage,
         voteCount = voteCount,
@@ -39,6 +39,14 @@ fun MovieDetail.toFavoriteEntity(): FavoriteMovieEntity {
         runtime = runtime,
         genres = genres.joinToString(",") { it.name }
     )
+}
+
+private fun extractPathFromUrl(url: String?): String? {
+    if (url == null) return null
+    // TMDB URL format: https://image.tmdb.org/t/p/w342/posterPath.jpg
+    // We need to extract: /posterPath.jpg
+    val regex = """/t/p/\w+(/[^/]+)$""".toRegex()
+    return regex.find(url)?.groupValues?.get(1)
 }
 
 @JvmName("favoriteEntityListToDomain")
